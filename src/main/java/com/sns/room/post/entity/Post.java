@@ -32,8 +32,6 @@ public class Post extends Timestamped {
     @Column
     private String photo;
 
-    @Column
-    private LocalDateTime create_at;
 
 
     @ManyToOne
@@ -45,7 +43,6 @@ public class Post extends Timestamped {
         this.content = requestDto.getContent();
         this.user = user;
         this.photo = requestDto.getPhoto();
-        this.create_at = LocalDateTime.now();
     }
 
     public void updatePost(String title, String content) {
