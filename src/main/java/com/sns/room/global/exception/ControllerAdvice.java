@@ -1,5 +1,6 @@
 package com.sns.room.global.exception;
 
+import com.sns.room.global.exception.dto.ErrorResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,26 +13,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ControllerAdvice {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
+    public ResponseEntity<ErrorResponseDto> handleValidationException(
         MethodArgumentNotValidException e) {
         log.error("회원 검증 실패", e);
         String message = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-        ErrorResponse errorResponse = new ErrorResponse(message);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        ErrorResponseDto errorResponseDto = new ErrorResponseDto(message);
+        return ResponseEntity.badRequest().body(errorResponseDto);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException e) {
+    public ResponseEntity<ErrorResponseDto> handleAuthenticationException(AuthenticationException e) {
         log.error("인증 실패", e);
-        ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
     }
 
     @ExceptionHandler(InvalidInputException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidInputException(InvalidInputException e) {
+    public ResponseEntity<ErrorResponseDto> handleInvalidInputException(InvalidInputException e) {
         log.error("잘못된 입력", e);
-        ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
     }
 
     @ExceptionHandler(RuntimeException.class)
@@ -41,7 +40,27 @@ public class ControllerAdvice {
     }
 
     @ExceptionHandler(InvalidCommentException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCommentException(InvalidCommentException e) {
-        return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+    public ResponseEntity<ErrorResponseDto> handleInvalidCommentException(InvalidCommentException e) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
+    }
+
+    @ExceptionHandler(NotFoundUserException.class)
+    public ResponseEntity<ErrorResponseDto> handleNotFoundUserException(NotFoundUserException e){
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
+    }
+
+    @ExceptionHandler(NotFoundPostException.class)
+    public ResponseEntity<ErrorResponseDto> handleNotFoundPostException(NotFoundPostException e){
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidSignUpException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidSignUpException(InvalidSignUpException e){
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
+    }
+
+    @ExceptionHandler(NotMatchedPasswordException.class)
+    public ResponseEntity<ErrorResponseDto> handleNotMatchedPasswordException(NotMatchedPasswordException e){
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(e.getMessage()));
     }
 }

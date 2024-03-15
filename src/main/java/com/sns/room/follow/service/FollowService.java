@@ -9,7 +9,7 @@ import com.sns.room.post.dto.PostResponseDto;
 import com.sns.room.post.entity.Post;
 import com.sns.room.post.service.PostService;
 import com.sns.room.user.entity.User;
-import com.sns.room.user.service.AuthService;
+import com.sns.room.user.service.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FollowService {
 
     private final FollowRepository followRepository;
-    private final AuthService authService;
+    private final UserService userService;
     private final PostService postService;
 
     @Transactional
@@ -30,7 +30,7 @@ public class FollowService {
             throw new InvalidInputException("자신을 팔로우할 수 없습니다.");
         }
 
-        authService.findUser(toUserId);
+        userService.findUser(toUserId);
 
         Follow follow = Follow.builder()
             .fromUserId(fromUser.getId())
@@ -42,7 +42,7 @@ public class FollowService {
 
     @Transactional
     public void deleteFollow(User fromUser, Long toUserId) {
-        authService.findUser(toUserId);
+        userService.findUser(toUserId);
 
         Follow follow = followRepository.findByFromUserIdAndToUserId(fromUser.getId(), toUserId)
             .orElseThrow(
@@ -54,7 +54,7 @@ public class FollowService {
 
     public List<FollowingResponseDto> getFollowingList(Long fromUserId) {
         List<Follow> follows = followRepository.findAllByFromUserId(fromUserId);
-        String username = authService.findUser(fromUserId).getUsername();
+        String username = userService.findUser(fromUserId).getUsername();
 
         List<FollowingResponseDto> list = follows.stream()
             .map(follow -> new FollowingResponseDto(follow, username)).toList();
@@ -64,7 +64,7 @@ public class FollowService {
 
     public List<FollowerResponseDto> getFollowerList(Long toUserId) {
         List<Follow> follows = followRepository.findAllByToUserId(toUserId);
-        String username = authService.findUser(toUserId).getUsername();
+        String username = userService.findUser(toUserId).getUsername();
 
         List<FollowerResponseDto> list = follows.stream()
             .map(follow -> new FollowerResponseDto(follow, username)).toList();
@@ -88,6 +88,6 @@ public class FollowService {
 
     public Follow findLatestUser(Long toUserId) {
         return followRepository.findFirstByToUserIdOrderByCreatedAtDesc(toUserId)
-            .orElseThrow(() -> new IllegalArgumentException("팔로우를 찾을 수 없습니다."));
+            .orElseThrow(() -> new InvalidInputException("팔로우를 찾을 수 없습니다."));
     }
 }

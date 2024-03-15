@@ -1,5 +1,7 @@
 package com.sns.room.comment.test;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sns.room.comment.controller.CommentController;
 import com.sns.room.global.jwt.UserDetailsImpl;
@@ -12,6 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 @WebMvcTest(CommentController.class)
 public class ControllerTest implements CommonTest {
@@ -29,6 +32,8 @@ public class ControllerTest implements CommonTest {
     void setUp() {
         mockMvc = MockMvcBuilders
             .webAppContextSetup(context)
+            .addFilter(new CharacterEncodingFilter("UTF-8", true))
+            .alwaysDo(print())
             .build();
 
         // Mock 테스트 UserDetails 생성

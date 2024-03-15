@@ -7,8 +7,10 @@ import com.sns.room.global.jwt.UserDetailsImpl;
 import com.sns.room.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -35,7 +38,7 @@ public class CommentController {
         @RequestBody CommentRequestDto commentRequestDto,
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         CommentResponseDto responseDto = commentService.createComment(commentRequestDto, postId,
-            userDetails.getUser().getId());
+            userDetails.getUser());
         notificationService.notifyComment(postId);
         return ResponseEntity.ok().body(responseDto);
 
@@ -48,7 +51,7 @@ public class CommentController {
         @RequestBody CommentRequestDto commentRequestDto,
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         CommentResponseDto responseDto = commentService.updateComment(commentRequestDto, postId,
-            userDetails.getUser().getId(), commentId);
+            userDetails.getUser(), commentId);
         return ResponseEntity.ok().body(responseDto);
     }
 
@@ -58,14 +61,35 @@ public class CommentController {
         @PathVariable Long commentId,
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         CommentResponseDto responseDto = commentService.deleteComment(postId,
-            userDetails.getUser().getId(), commentId);
+            userDetails.getUser(), commentId);
         return ResponseEntity.ok().body(responseDto);
 
     }
 
     @Operation(summary = "댓글 조회", description = "댓글을 조회할 수 있는 API")
-    @GetMapping
-    public List<CommentResponseDto> getAllComment() {
-        return commentService.getAllComment();
+    @GetMapping("/search/jpa")
+    public Page<CommentResponseDto> getAllComment(
+        @RequestParam(name = "page", defaultValue = "1") int page,
+        @RequestParam(name = "size", defaultValue = "3") int size,
+        @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
+        @RequestParam(name = "isAsc", defaultValue = "false") boolean isAsc
+    ) {
+        return commentService.getAllComment(page - 1, size, sortBy, isAsc);
+    }
+
+    @GetMapping("/search/querydsl")
+    public Page<CommentResponseDto> getCommentListWithPage(
+        @RequestParam(name = "search", defaultValue = "") String search,
+        @RequestParam(name = "page", defaultValue = "1") int page,
+        @RequestParam(name = "size", defaultValue = "3") int size,
+        @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
+        @RequestParam(name = "isAsc", defaultValue = "false") boolean isAsc) {
+        return commentService.getCommentListWithPage(search, page - 1, size, sortBy, isAsc);
+    }
+
+    @GetMapping()
+    public List<CommentResponseDto> getCommentList(
+        @Nullable @RequestParam(name = "search", defaultValue = "") String search) {
+        return commentService.searchCommentList(search);
     }
 }

@@ -7,7 +7,7 @@ import com.sns.room.user.dto.ResponseDto;
 import com.sns.room.user.dto.SignupRequestDto;
 import com.sns.room.user.dto.UserRequestDto;
 import com.sns.room.user.dto.UserResponseDto;
-import com.sns.room.user.service.AuthService;
+import com.sns.room.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,9 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @Tag(name = "User", description = "유저 컨트롤러")
-public class AuthController {
+public class UserController {
 
-    private final AuthService authService;
+    private final UserService userService;
+
     @Operation(summary = "회원가입", description = "회원가입 API")
     @PostMapping("/auth/signup")
     public ResponseEntity<ResponseDto<String>> signup(
@@ -48,20 +49,22 @@ public class AuthController {
             );
         }
 
-        authService.signup(signupRequestDto);
+        userService.signup(signupRequestDto);
 
         return ResponseEntity.status(HttpStatusCode.valueOf(200)).build();
     }
+
     @Operation(summary = "로그인", description = "로그인 API")
     @PostMapping("/auth/login")
     public ResponseEntity<ResponseDto<String>> login(
         @RequestBody LoginRequestDto loginRequestDto,
         HttpServletResponse res) {
 
-        authService.login(loginRequestDto, res);
+        userService.login(loginRequestDto, res);
 
         return ResponseEntity.status(HttpStatusCode.valueOf(200)).build();
     }
+
     @Operation(summary = "유저 조회", description = "유저 조회 API")
     @GetMapping("/mypage")
     public ResponseEntity<ResponseDto<UserResponseDto>> getUser(
@@ -69,31 +72,33 @@ public class AuthController {
 
         Long userId = userDetails.getUser().getId();
 
-        UserResponseDto userResponseDto = authService.getUserProfile(userId);
+        UserResponseDto userResponseDto = userService.getUserProfile(userId);
         return ResponseEntity.ok()
             .body(ResponseDto.<UserResponseDto>builder()
                 .data(userResponseDto)
                 .build());
     }
+
     @Operation(summary = "유저 마이페이지 수정", description = "유저 마이페이지 수정 API")
     @PutMapping("/mypage")
     public ResponseEntity<ResponseDto<UserResponseDto>> updateUser(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestBody UserRequestDto userRequestDto) {
 
-        UserResponseDto updatedUser = authService.updateUser(userDetails, userRequestDto);
+        UserResponseDto updatedUser = userService.updateUser(userDetails, userRequestDto);
         return ResponseEntity.ok()
             .body(ResponseDto.<UserResponseDto>builder()
                 .data(updatedUser)
                 .build());
     }
+
     @Operation(summary = "유저 비밀번호 변경", description = "비밀번호 변경 API")
     @PutMapping("/password-patch")
     public ResponseEntity<ResponseDto<String>> updatePassword(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestBody PasswordUpdateRequestDto passwordUpdateRequestDto) {
 
-        authService.updatePassword(userDetails, passwordUpdateRequestDto);
+        userService.updatePassword(userDetails, passwordUpdateRequestDto);
         return ResponseEntity.ok()
             .body(ResponseDto.<String>builder()
                 .build());

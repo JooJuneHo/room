@@ -23,7 +23,7 @@ class CommentResponseDtoTest {
         //then
         assertThat(commentResponseDto.getPostTitle()).isEqualTo(postTitle);
         assertThat(commentResponseDto.getUsername()).isEqualTo(username);
-        assertThat(commentResponseDto.getComment()).isEqualTo(comment);
+        assertThat(commentResponseDto.getContent()).isEqualTo(comment);
 
     }
 

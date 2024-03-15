@@ -28,7 +28,7 @@ public class Comment extends Timestamped {
     private long commentId;
 
     @Column(nullable = false)
-    private String comment;
+    private String content;
 
     @Column
     private LocalDateTime deleted_at = null; // 기본값을 null로 설정
@@ -41,14 +41,14 @@ public class Comment extends Timestamped {
     @JoinColumn(name = "postId")
     private Post post;
 
-    public Comment(String comment, Post post, User user) {
-        this.comment = comment;
+    public Comment(String content, Post post, User user) {
+        this.content = content;
         this.user = user;
         this.post = post;
     }
 
     public void Update(String comment) {
-        this.comment = comment;
+        this.content = comment;
     }
 
     public void SoftDeleted() {

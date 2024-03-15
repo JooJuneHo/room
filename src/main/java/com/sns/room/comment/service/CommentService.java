@@ -10,10 +10,14 @@ import com.sns.room.global.exception.InvalidUserException;
 import com.sns.room.post.entity.Post;
 import com.sns.room.post.repository.PostRepository;
 import com.sns.room.user.entity.User;
-import com.sns.room.user.repository.UserRepository;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,72 +27,80 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
 
 
     public CommentResponseDto createComment(CommentRequestDto commentRequestDto, long postId,
-        long userId) {
+        User user) {
         Post post = checkPost(postId);
-        System.out.println(post+"포스트를 확인해주세요");
-        User user = checkUser(userId);
-
-        Comment comment = new Comment(commentRequestDto.getComment(), post, user);
+        Comment comment = new Comment(commentRequestDto.getContent(), post, user);
 
         commentRepository.save(comment);
 
         return new CommentResponseDto(comment.getPost().getTitle(), comment.getUser().getUsername(),
-            comment.getComment(), comment.getCreatedAt(), comment.getModifiedAt());
+            comment.getContent(), comment.getCreatedAt(), comment.getModifiedAt());
     }
 
     @Transactional
     public CommentResponseDto updateComment(CommentRequestDto commentRequestDto, long postId,
-        long userId, long commentId) {
+        User user, long commentId) {
         Post post = checkPost(postId);
-
-        User user = checkUser(userId);
-
         Comment comment = checkComment(commentId);
 
         isValidPost(post, comment);
-
         isValidUser(user, comment);
 
-        comment.Update(commentRequestDto.getComment());
+        comment.Update(commentRequestDto.getContent());
 
         return new CommentResponseDto(comment.getPost().getTitle(), comment.getUser().getUsername(),
-            comment.getComment(), comment.getCreatedAt(), comment.getModifiedAt());
+            comment.getContent(), comment.getCreatedAt(), comment.getModifiedAt());
     }
 
 
     @Transactional
-    public CommentResponseDto deleteComment(long postId, long userId, long commentId) {
+    public CommentResponseDto deleteComment(long postId, User user, long commentId) {
         Post post = checkPost(postId);
-
-        User user = checkUser(userId);
-
         Comment comment = checkComment(commentId);
 
         isValidPost(post, comment);
-
         isValidUser(user, comment);
 
         comment.SoftDeleted();
 
         return new CommentResponseDto(comment.getPost().getTitle(), comment.getUser().getUsername(),
-            comment.getComment(), comment.getCreatedAt(), comment.getModifiedAt());
+            comment.getContent(), comment.getCreatedAt(), comment.getModifiedAt());
     }
 
-    public List<CommentResponseDto> getAllComment() {
-        List<Comment> commentList = commentRepository.findAll();
-        List<CommentResponseDto> responseDtoList = new ArrayList<>();
+    public Page<CommentResponseDto> getAllComment(int page, int size, String sortBy,
+        boolean isAsc) {
+        Direction direction = isAsc ? Direction.ASC : Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        for (Comment comment : commentList) {
-            responseDtoList.add(new CommentResponseDto(comment.getPost().getTitle(),
-                comment.getUser().getUsername(), comment.getComment(), comment.getCreatedAt(),
-                comment.getModifiedAt()));
-        }
+        Page<Comment> commentPage = commentRepository.findAll(pageable);
 
-        return responseDtoList;
+        return commentPage.map(CommentResponseDto::new);
+    }
+
+    public List<CommentResponseDto> searchCommentList(String search) {
+        // queryDSL를 이용한 where = category 조회 로직 실습
+
+        //1. search가 없을 때는 전체 조회
+        //2. search가 있을 때는 해당 카테고리만 조회
+
+        List<Comment> response = commentRepository.searchCommentList(search);
+
+        return response.stream().map(CommentResponseDto::new).collect(Collectors.toList());
+    }
+
+    public Page<CommentResponseDto> getCommentListWithPage(String search, int page, int size,
+        String sortBy, boolean isAsc) {
+        Direction direction = isAsc ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Comment> commentPage = commentRepository.getCommentListWithPage(search, pageable);
+
+        return commentPage.map(CommentResponseDto::new);
     }
 
     // 존재하는 게시글인지 검증
@@ -99,12 +111,6 @@ public class CommentService {
         return post;
     }
 
-    // 존재하는 유저인지 검증
-    private User checkUser(long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new InvalidUserException("존재하지 않는 유저입니다."));
-        return user;
-    }
 
     // 존재하는 댓글인지 검증
     private Comment checkComment(long commentId) {
@@ -135,4 +141,6 @@ public class CommentService {
             () -> new IllegalArgumentException("댓글을 찾을 수 없습니다.")
         );
     }
+
+
 }
