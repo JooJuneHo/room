@@ -6,8 +6,8 @@ import com.sns.room.post.dto.PostResponseDto;
 import com.sns.room.post.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -33,15 +34,20 @@ public class PostController {
         @RequestBody PostRequestDto requestDto,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        Long loginUserId = userDetails.getUser().getId();
-        return ResponseEntity.ok(postService.createPost(requestDto, loginUserId));
+        return ResponseEntity.ok(postService.createPost(requestDto, userDetails.getUser()));
     }
 
     //게시글 전체 조회
     @Operation(summary = "게시글 전체조회", description = "게시글 전체조회 API")
     @GetMapping("/posts")
-    public ResponseEntity<List<PostResponseDto>> getAllPost() {
-        List<PostResponseDto> postList = postService.findAllPost();
+    public ResponseEntity<Page<PostResponseDto>> getAllPost(
+        @RequestParam(name = "search", defaultValue = "") String search,
+        @RequestParam(name = "page", defaultValue = "1") int page,
+        @RequestParam(name = "size", defaultValue = "3") int size,
+        @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
+        @RequestParam(name = "isAsc", defaultValue = "true") boolean isAsc) {
+        Page<PostResponseDto> postList = postService.findAllPost(search, page - 1, size, sortBy,
+            isAsc);
         return ResponseEntity.ok(postList);
     }
 
@@ -59,9 +65,8 @@ public class PostController {
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<?> deletePost(@PathVariable Long postId,
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        Long userId = userDetails.getUser().getId();
         try {
-            postService.delete(postId, userId);
+            postService.delete(postId, userDetails.getUser());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity
@@ -76,6 +81,6 @@ public class PostController {
         @RequestBody PostRequestDto requestDto,
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Long userId = userDetails.getUser().getId();
-        return postService.updatePost(postId, requestDto, userId);
+        return postService.updatePost(postId, requestDto, userDetails.getUser());
     }
 }
