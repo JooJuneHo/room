@@ -46,7 +46,7 @@ public class PostService {
         return postDtoList;
     }
 
-    //게시글 선택 조회
+    //게시글 선택 조회pull
     public PostResponseDto getPost(Long postId) {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new IllegalArgumentException(postId + "를 찾을수 없습니다."));
