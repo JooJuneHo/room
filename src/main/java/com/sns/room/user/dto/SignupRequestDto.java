@@ -1,6 +1,5 @@
 package com.sns.room.user.dto;
 
-import com.sns.room.user.entity.UserRoleEnum;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
@@ -25,7 +24,6 @@ public class SignupRequestDto {
 
     private String email;
 
-    private UserRoleEnum role;
-
+    private boolean admin = false;
     private String adminToken = "";
 }

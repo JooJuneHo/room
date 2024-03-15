@@ -9,9 +9,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Builder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 
@@ -55,6 +55,12 @@ public class User extends Timestamped {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.role = role;
+    }
+
+    public User(Long userId, String username, UserRoleEnum role) {
+        this.id = userId;
+        this.username = username;
         this.role = role;
     }
 
