@@ -42,6 +42,6 @@ public class LikeService {
 
     public Like findLatestLike(Long postId) {
         return likeRepository.findFirstByPostIdOrderByCreatedAtDesc(postId)
-            .orElseThrow(() -> new IllegalArgumentException("좋아요를 찾을 수 없습니다."));
+            .orElseThrow(() -> new InvalidInputException("좋아요를 찾을 수 없습니다."));
     }
 }

@@ -1,11 +1,13 @@
 package com.sns.room.comment.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sns.room.comment.dto.CommentRequestDto;
@@ -24,11 +26,11 @@ import org.springframework.http.MediaType;
 @WebMvcTest(CommentController.class)
 class CommentControllerTest extends ControllerTest {
 
+    @MockBean
+    private CommentService commentService;
 
     @MockBean
     private NotificationService notificationService;
-    @MockBean
-    private CommentService commentService;
 
 
     @Test
@@ -37,7 +39,7 @@ class CommentControllerTest extends ControllerTest {
         //given
         String comment = "comment";
         CommentRequestDto commentRequestDto = new CommentRequestDto();
-        commentRequestDto.setComment(comment);
+        commentRequestDto.setContent(comment);
 
         String postTitle = "postTitle";
         String username = "username";
@@ -47,9 +49,7 @@ class CommentControllerTest extends ControllerTest {
         CommentResponseDto responseDto = new CommentResponseDto(postTitle, username, comment,
             createdAt, modifiedAt);
 
-        given(
-            commentService.createComment(commentRequestDto, TEST_POST_ID, TEST_USER_ID)).willReturn(
-            responseDto);
+        given(commentService.createComment(any(), anyLong(), any())).willReturn(responseDto);
 
         //when
         var action = mockMvc.perform(post("/posts/{postId}/comments", TEST_POST_ID)
@@ -59,7 +59,7 @@ class CommentControllerTest extends ControllerTest {
 
         //then
         action.andExpect(status().isOk())
-            .andDo(print());
+            .andExpect(content().string(objectMapper.writeValueAsString(responseDto)));
     }
 
 
@@ -73,7 +73,7 @@ class CommentControllerTest extends ControllerTest {
             //given
             String comment = "comment";
             CommentRequestDto commentRequestDto = new CommentRequestDto();
-            commentRequestDto.setComment(comment);
+            commentRequestDto.setContent(comment);
 
             String postTitle = "postTitle";
             String username = "username";
@@ -81,8 +81,8 @@ class CommentControllerTest extends ControllerTest {
             LocalDateTime modifiedAt = LocalDateTime.now();
             CommentResponseDto commentResponseDto = new CommentResponseDto(postTitle, username,
                 comment, createdAt, modifiedAt);
-            given(commentService.updateComment(commentRequestDto, TEST_POST_ID, TEST_USER_ID,
-                TEST_COMMENT_ID)).willReturn(commentResponseDto);
+            given(commentService.updateComment(any(), anyLong(), any(),
+                anyLong())).willReturn(commentResponseDto);
 
             //when
             var action = mockMvc.perform(
@@ -93,9 +93,8 @@ class CommentControllerTest extends ControllerTest {
 
             //then
             action.andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(content().string(objectMapper.writeValueAsString(commentResponseDto)));
         }
-
     }
 
 
@@ -105,17 +104,22 @@ class CommentControllerTest extends ControllerTest {
         @Test
         @DisplayName("댓글 삭제 요청")
         void deleteComment() throws Exception {
+            //given
             CommentRequestDto commentRequestDto = new CommentRequestDto();
-            commentRequestDto.setComment("comment");
+            commentRequestDto.setContent("comment");
 
+            CommentResponseDto commentResponseDto = new CommentResponseDto();
+
+            given(commentService.deleteComment(anyLong(), any(), anyLong())).willReturn(
+                commentResponseDto);
+
+            //when
             var action = mockMvc.perform(
-                delete("/posts/{postId}/comments/{commentId}", TEST_POST_ID, TEST_COMMENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(commentRequestDto)));
+                delete("/posts/{postId}/comments/{commentId}", TEST_POST_ID, TEST_COMMENT_ID));
 
+            //then
             action.andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(content().string(objectMapper.writeValueAsString(commentResponseDto)));
         }
     }
 
@@ -126,11 +130,13 @@ class CommentControllerTest extends ControllerTest {
         @Test
         @DisplayName("댓글 조회 요청")
         void getAllComment() throws Exception {
-            var action = mockMvc.perform(get("/posts/{postId}/comments", TEST_POST_ID));
+            //when
+            var action = mockMvc.perform(
+                get("/posts/{postId}/comments/search/querydsl?content=3&page=1&size=4&sortBy=createdAt&isAsc=true",
+                    TEST_POST_ID));
 
-            action.andExpect(status().isOk())
-                .andDo(print());
+            //then
+            action.andExpect(status().isOk());
         }
     }
-
 }
